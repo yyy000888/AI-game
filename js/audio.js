@@ -68,17 +68,9 @@ const AudioEngine = (function () {
 })();
 
 function createAudioToggleButton() {
-  if (document.getElementById('btn-audio-toggle')) return;
-  const btn = document.createElement('button');
-  btn.id = 'btn-audio-toggle';
-  btn.className = 'btn-icon';
-  btn.setAttribute('aria-label', '声音开关');
-  btn.textContent = '🔇';
-  btn.title = '点击开启背景音乐';
-  btn.style.position = 'fixed';
-  btn.style.top = '16px';
-  btn.style.right = '56px';
-  btn.style.zIndex = '100';
+  // 按钮已在 HTML 中预设，无需动态创建
+  const btn = document.getElementById('btn-audio-toggle');
+  if (!btn) return;
   btn.addEventListener('click', () => {
     if (!AudioEngine.isPlaying) {
       AudioEngine.play();
@@ -86,7 +78,6 @@ function createAudioToggleButton() {
       AudioEngine.toggleMute();
     }
   });
-  document.body.appendChild(btn);
 }
 
 // 启动界面第一次交互后尝试播放（浏览器 autoplay 策略要求用户交互）
