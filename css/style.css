@@ -36,7 +36,8 @@ body {
 #app {
   width: 100%;
   max-width: 800px;
-  height: 100vh;
+  height: 100vh; /* fallback */
+  height: 100dvh; /* 动态可视高度，避开手机浏览器底部工具栏 */
   margin: 0 auto;
   position: relative;
   overflow: hidden;
@@ -302,7 +303,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
-  padding: 1rem 1.5rem 1.5rem;
+  padding: 1rem 1.5rem calc(1.5rem + env(safe-area-inset-bottom, 0px));
   background: var(--bg-dark);
   flex-shrink: 0;
 }
@@ -712,7 +713,7 @@ body {
   }
 
   .choices-area {
-    padding: 0.75rem 1rem 1rem;
+    padding: 0.75rem 1rem calc(1rem + env(safe-area-inset-bottom, 0px));
   }
 
   .portrait-container {
