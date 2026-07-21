@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>迷雾小镇 — AI悬疑文字冒险</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="app">
+    <!-- 启动界面 -->
+    <section id="screen-start" class="screen active">
+      <button class="btn-icon settings-trigger" aria-label="设置">⚙</button>
+      <div class="start-content">
+        <h1 class="game-title">迷雾小镇</h1>
+        <p class="game-subtitle">AI驱动的悬疑文字冒险</p>
+        <p class="game-desc">你是一名侦探，踏入被浓雾笼罩的小镇，调查一起离奇失踪案……</p>
+        <button id="btn-start" class="btn-primary">开始调查</button>
+      </div>
+      <div class="start-bg"></div>
+    </section>
+
+    <!-- 剧情界面 -->
+    <section id="screen-game" class="screen">
+      <header class="game-header">
+        <div class="status-bar">
+          <span id="status-chapter">第1章</span>
+          <span class="divider">|</span>
+          <span>线索 <strong id="status-clues">0</strong></span>
+          <span class="divider">|</span>
+          <span>嫌疑度 <strong id="status-suspicion">0</strong></span>
+        </div>
+        <div class="header-actions">
+          <button id="btn-history" class="btn-icon" aria-label="历史">📜</button>
+          <button class="btn-icon settings-trigger" aria-label="设置">⚙</button>
+        </div>
+      </header>
+
+      <div class="scene-area">
+        <img id="scene-image" src="assets/images/scene-default.png" alt="场景">
+        <div id="portrait-container" class="portrait-container hidden">
+          <img id="portrait-image" src="" alt="角色立绘">
+        </div>
+      </div>
+
+      <div class="story-area">
+        <p id="scene-description" class="scene-description"></p>
+        <div id="narration-box" class="narration-box">
+          <p id="narration-text"></p>
+          <span id="typewriter-cursor" class="typewriter-cursor">|</span>
+        </div>
+      </div>
+
+      <div id="choices-area" class="choices-area"></div>
+
+      <div id="loading-overlay" class="loading-overlay hidden">
+        <div class="fog-spinner"></div>
+        <p>迷雾深处，真相正在浮现……</p>
+      </div>
+
+      <div id="clue-toast" class="clue-toast hidden">
+        <span class="clue-icon">🔍</span>
+        <span id="clue-text">获得线索</span>
+      </div>
+      <div id="suspicion-toast" class="suspicion-toast hidden">
+        <span class="clue-icon">⚠️</span>
+        <span id="suspicion-text">嫌疑度变化</span>
+      </div>
+    </section>
+
+    <!-- 结局界面 -->
+    <section id="screen-ending" class="screen">
+      <div class="ending-content">
+        <div id="ending-grade" class="ending-grade">A</div>
+        <h2 id="ending-title">真相大白</h2>
+        <p id="ending-type-label" class="ending-type-label"></p>
+        <div id="ending-text" class="ending-text"></div>
+        <div class="ending-stats">
+          <span>线索：<strong id="ending-clues">0</strong></span>
+          <span>嫌疑度：<strong id="ending-suspicion">0</strong></span>
+        </div>
+        <div class="ending-actions">
+          <button id="btn-restart" class="btn-primary">重新开始</button>
+          <button id="btn-view-process" class="btn-secondary">查看过程</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 设置界面 -->
+    <section id="screen-settings" class="screen">
+      <div class="settings-panel">
+        <h2>设置</h2>
+        <button id="btn-close-settings" class="btn-icon close-btn" aria-label="关闭">✕</button>
+
+        <label for="input-api-key">API Key</label>
+        <input type="password" id="input-api-key" placeholder="sk-..." autocomplete="off">
+
+        <label for="select-model">模型</label>
+        <select id="select-model">
+          <option value="gpt-4o-mini">gpt-4o-mini</option>
+          <option value="qwen-plus">qwen-plus</option>
+          <option value="deepseek-chat">deepseek-chat</option>
+        </select>
+
+        <label for="input-base-url">API Base URL</label>
+        <input type="text" id="input-base-url" placeholder="https://api.openai.com/v1">
+
+        <p class="settings-hint">未配置 API Key 时将使用内置演示剧情，仍可体验完整流程。</p>
+
+        <button id="btn-test-api" class="btn-secondary btn-test">测试连接</button>
+        <div id="api-test-result" class="api-test-result hidden"></div>
+
+        <button id="btn-save-settings" class="btn-primary">保存设置</button>
+      </div>
+    </section>
+  </div>
+
+  <!-- 过程回顾弹窗 -->
+  <div id="process-modal" class="modal hidden">
+    <div class="modal-overlay"></div>
+    <div class="modal-panel">
+      <button id="btn-close-process" class="btn-icon close-btn" aria-label="关闭">✕</button>
+      <h2>调查过程回顾</h2>
+      <div id="process-content" class="process-content"></div>
+    </div>
+  </div>
+
+  <!-- 历史对话弹窗 -->
+  <div id="history-modal" class="modal hidden">
+    <div class="modal-overlay"></div>
+    <div class="modal-panel">
+      <button id="btn-close-history" class="btn-icon close-btn" aria-label="关闭">✕</button>
+      <h2>历史对话</h2>
+      <div id="history-content" class="process-content"></div>
+    </div>
+  </div>
+
+  <script src="js/story.js"></script>
+  <script src="js/game.js"></script>
+  <script src="js/ai.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
