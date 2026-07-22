@@ -6,6 +6,7 @@ let previousScreen = 'start';
 
 function init() {
   bindEvents();
+  bindDialogueClick();
   loadSettingsForm(loadSettings());
 }
 
@@ -23,6 +24,19 @@ function bindEvents() {
   document.querySelectorAll('.settings-trigger').forEach((btn) => {
     btn.addEventListener('click', openSettings);
   });
+}
+
+/** 对话框点击 → 逐句推进 */
+function bindDialogueClick() {
+  const dialogueBox = document.getElementById('dialogue-box');
+  if (dialogueBox) {
+    dialogueBox.addEventListener('click', () => {
+      // 正在打字 → 点击完成当前句
+      // 不在打字且还有句子 → 显示下一句
+      // 句子播完 → 显示选项
+      showNextSentence();
+    });
+  }
 }
 
 function hideProcessModal() {
