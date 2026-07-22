@@ -23,8 +23,9 @@
       <div class="start-bg"></div>
     </section>
 
-    <!-- 剧情界面 -->
+    <!-- 剧情界面 — Visual Novel 风格 -->
     <section id="screen-game" class="screen">
+      <!-- 顶部状态栏 -->
       <header class="game-header">
         <div class="status-bar">
           <span id="status-chapter">第1章</span>
@@ -40,22 +41,26 @@
         </div>
       </header>
 
-      <div class="scene-area">
-        <img id="scene-image" src="assets/images/scene-default.png" alt="场景">
-        <div id="portrait-container" class="portrait-container hidden">
+      <!-- 场景背景 + 立绘 -->
+      <div class="vn-stage">
+        <img id="scene-image" src="assets/images/scene-default.png" alt="场景" class="vn-bg">
+        <div id="portrait-container" class="vn-portrait hidden">
           <img id="portrait-image" src="" alt="角色立绘">
         </div>
       </div>
 
-      <div class="story-area">
-        <p id="scene-description" class="scene-description"></p>
-        <div id="narration-box" class="narration-box">
-          <p id="narration-text"></p>
-          <span id="typewriter-cursor" class="typewriter-cursor">|</span>
+      <!-- 对话框 + 选项（底部叠加） -->
+      <div class="vn-bottom">
+        <div id="dialogue-box" class="vn-dialogue-box">
+          <div id="scene-label" class="vn-scene-label"></div>
+          <div id="narration-box" class="vn-narration-box">
+            <p id="narration-text"></p>
+            <span id="typewriter-cursor" class="typewriter-cursor">▼</span>
+            <div id="click-hint" class="vn-click-hint">点击继续 ▼</div>
+          </div>
         </div>
+        <div id="choices-area" class="vn-choices-area"></div>
       </div>
-
-      <div id="choices-area" class="choices-area"></div>
 
       <div id="loading-overlay" class="loading-overlay hidden">
         <div class="fog-spinner"></div>
