@@ -35,6 +35,7 @@
           <span>嫌疑度 <strong id="status-suspicion">0</strong></span>
         </div>
         <div class="header-actions">
+          <button id="btn-hint" class="btn-hint" aria-label="提示" title="显示当前选项提示（每幕一次）">?</button>
           <button id="btn-audio-toggle" class="btn-icon" aria-label="声音开关" title="点击开启背景音乐">🔇</button>
           <button id="btn-history" class="btn-icon" aria-label="历史">📜</button>
           <button class="btn-icon settings-trigger" aria-label="设置">⚙</button>
@@ -49,13 +50,21 @@
         </div>
       </div>
 
+      <!-- 章节过渡动画 -->
+      <div id="chapter-transition" class="chapter-transition hidden">
+        <div class="chapter-transition-line"></div>
+        <div class="chapter-transition-number">第1章</div>
+        <div class="chapter-transition-title">雾中初至</div>
+        <div class="chapter-transition-goal">认识小镇，获得初步线索</div>
+        <div class="chapter-transition-line"></div>
+      </div>
+
       <!-- 对话框 + 选项（底部叠加） -->
       <div class="vn-bottom">
         <div id="dialogue-box" class="vn-dialogue-box">
           <div id="scene-label" class="vn-scene-label"></div>
           <div id="narration-box" class="vn-narration-box">
             <p id="narration-text"></p>
-            <span id="typewriter-cursor" class="typewriter-cursor">▼</span>
             <div id="click-hint" class="vn-click-hint">点击继续 ▼</div>
           </div>
         </div>
