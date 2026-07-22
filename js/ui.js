@@ -1,7 +1,14 @@
-/** UI 渲染与交互 — 全局函数版 */
+/** UI 渲染与交互 — Visual Novel 风格 */
 
 let typewriterTimer = null;
-let typewriterSkipHandler = null;
+let vnState = {
+  sentences: [],
+  currentSentenceIdx: 0,
+  isTyping: false,
+  onComplete: null,
+  onChoice: null,
+  choices: []
+};
 
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => document.querySelectorAll(sel);
@@ -18,7 +25,6 @@ function showLoading(show) {
 }
 
 function updateStatusBar(state) {
-  const chapterInfo = getChapterInfo(state.currentChapter);
   $('#status-chapter').textContent = `第${state.currentChapter}章`;
   $('#status-clues').textContent = state.clues.length;
   $('#status-suspicion').textContent = state.suspicion;
@@ -31,7 +37,6 @@ function showClueToast(clueName) {
 
   text.textContent = `获得线索：${clueName}`;
   toast.className = 'clue-toast';
-
   setTimeout(() => toast.classList.add('hidden'), 3000);
 }
 
@@ -44,7 +49,6 @@ function showSuspicionToast(delta) {
   const suffix = delta > 0 ? '上升' : '下降';
   text.textContent = `嫌疑度${suffix} ${sign}${Math.abs(delta)}`;
   toast.className = delta >= 0 ? 'suspicion-toast' : 'suspicion-toast decrease';
-
   setTimeout(() => toast.classList.add('hidden'), 3000);
 }
 
@@ -74,15 +78,131 @@ function renderPortrait(portraitName) {
   }
 }
 
+/**
+ * 将叙述文字按句号/感叹号/问号分割成句子
+ */
+function splitSentences(text) {
+  if (!text) return [''];
+  // 按中文标点分割，保留标点
+  const sentences = text.match(/[^。！？…]+[。！？…]*/g);
+  return sentences || [text];
+}
+
+/**
+ * 渲染剧情节点 — VN 逐句模式
+ */
 function renderStoryNode(node, onChoice, onTypewriterDone) {
-  $('#scene-description').textContent = node.sceneDescription || '';
+  // 场景标签
+  $('#scene-label').textContent = node.sceneDescription || '';
+
+  // 场景图 + 立绘
   renderSceneImage(node);
   renderPortrait(node.portrait);
 
-  typewriterEffect(node.narration || '', () => {
-    renderChoices(node.choices || [], onChoice);
-    onTypewriterDone?.();
-  });
+  // 分句
+  vnState.sentences = splitSentences(node.narration || '');
+  vnState.currentSentenceIdx = 0;
+  vnState.choices = node.choices || [];
+  vnState.onChoice = onChoice;
+  vnState.onComplete = onTypewriterDone;
+
+  // 清空选项区
+  $('#choices-area').innerHTML = '';
+
+  // 开始显示第一句
+  showNextSentence();
+}
+
+function showNextSentence() {
+  const el = $('#narration-text');
+  const cursor = $('#typewriter-cursor');
+  const hint = $('#click-hint');
+  if (!el) return;
+
+  // 如果正在打字，点击直接完成当前句
+  if (vnState.isTyping) {
+    finishCurrentSentence();
+    return;
+  }
+
+  // 所有句子播完 → 显示选项
+  if (vnState.currentSentenceIdx >= vnState.sentences.length) {
+    cursor?.classList.add('hidden');
+    hint?.classList.add('hidden');
+    renderChoices(vnState.choices, vnState.onChoice);
+    vnState.onComplete?.();
+    vnState.onComplete = null;
+    return;
+  }
+
+  // 开始打下一句
+  const sentence = vnState.sentences[vnState.currentSentenceIdx];
+  hint?.classList.add('hidden');
+  cursor?.classList.remove('hidden');
+
+  // 如果是第一句，清空；否则追加
+  if (vnState.currentSentenceIdx === 0) {
+    el.textContent = '';
+  }
+
+  vnState.isTyping = true;
+  let charIndex = 0;
+  const speed = 30;
+
+  typewriterTimer = setInterval(() => {
+    if (charIndex < sentence.length) {
+      el.textContent += sentence[charIndex];
+      charIndex++;
+    } else {
+      // 当前句打完
+      clearInterval(typewriterTimer);
+      typewriterTimer = null;
+      vnState.isTyping = false;
+      vnState.currentSentenceIdx++;
+
+      // 如果还有下一句，显示"点击继续"
+      if (vnState.currentSentenceIdx < vnState.sentences.length) {
+        hint?.classList.remove('hidden');
+      } else {
+        // 最后一句打完，显示提示
+        hint?.classList.remove('hidden');
+        hint.textContent = '点击继续 ▼';
+      }
+    }
+  }, speed);
+}
+
+function finishCurrentSentence() {
+  const el = $('#narration-text');
+  if (!el) return;
+
+  if (typewriterTimer) {
+    clearInterval(typewriterTimer);
+    typewriterTimer = null;
+  }
+
+  // 补全当前句的剩余文字
+  const sentence = vnState.sentences[vnState.currentSentenceIdx] || '';
+  // 当前已显示的文字中，属于本句的部分
+  const previousSentences = vnState.sentences.slice(0, vnState.currentSentenceIdx).join('');
+  const currentShown = el.textContent.substring(previousSentences.length);
+  const remaining = sentence.substring(currentShown.length);
+  el.textContent += remaining;
+
+  vnState.isTyping = false;
+  vnState.currentSentenceIdx++;
+
+  const hint = $('#click-hint');
+  hint?.classList.remove('hidden');
+  hint.textContent = vnState.currentSentenceIdx < vnState.sentences.length ? '点击继续 ▼' : '点击继续 ▼';
+}
+
+function stopTypewriter() {
+  if (typewriterTimer) {
+    clearInterval(typewriterTimer);
+    typewriterTimer = null;
+  }
+  vnState.isTyping = false;
 }
 
 function renderChoices(choices, onChoice) {
@@ -102,50 +222,16 @@ function renderChoices(choices, onChoice) {
   });
 }
 
-function typewriterEffect(text, onComplete) {
-  stopTypewriter();
-
-  const el = $('#narration-text');
-  const cursor = $('#typewriter-cursor');
-  if (!el) return;
-
-  el.textContent = '';
-  cursor?.classList.remove('hidden');
-
-  let index = 0;
-  const speed = 35;
-
-  const finish = () => {
-    stopTypewriter();
-    el.textContent = text;
-    cursor?.classList.add('hidden');
-    onComplete?.();
-  };
-
-  typewriterSkipHandler = finish;
-  $('#narration-box')?.addEventListener('click', typewriterSkipHandler, { once: true });
-
-  typewriterTimer = setInterval(() => {
-    if (index < text.length) {
-      el.textContent += text[index];
-      index += 1;
-    } else {
-      finish();
-    }
-  }, speed);
+function disableChoices() {
+  $$('.btn-choice').forEach((b) => (b.disabled = true));
 }
 
-function stopTypewriter() {
-  if (typewriterTimer) {
-    clearInterval(typewriterTimer);
-    typewriterTimer = null;
-  }
-  if (typewriterSkipHandler) {
-    $('#narration-box')?.removeEventListener('click', typewriterSkipHandler);
-    typewriterSkipHandler = null;
-  }
+function clearChoices() {
+  const area = $('#choices-area');
+  if (area) area.innerHTML = '';
 }
 
+/* ===== 结局 ===== */
 function renderEnding(state) {
   const ending = state.ending;
   if (!ending) return;
@@ -164,6 +250,7 @@ function renderEnding(state) {
   showScreen('ending');
 }
 
+/* ===== 设置 ===== */
 function loadSettingsForm(settings) {
   $('#input-api-key').value = settings.apiKey;
   $('#input-base-url').value = settings.apiBaseUrl;
@@ -176,36 +263,6 @@ function getSettingsFormValues() {
     apiBaseUrl: $('#input-base-url').value.trim() || 'https://api.openai.com/v1',
     model: $('#select-model').value
   };
-}
-
-async function shareEnding() {
-  const content = $('#screen-ending');
-  if (!content) return;
-
-  try {
-    if (navigator.share) {
-      await navigator.share({
-        title: `迷雾小镇 — ${$('#ending-title')?.textContent}`,
-        text: `${$('#ending-text')?.textContent?.slice(0, 100)}...`
-      });
-    } else {
-      await navigator.clipboard.writeText(
-        `《迷雾小镇》结局：${$('#ending-title')?.textContent}\n评级：${$('#ending-grade')?.textContent}\n\n${$('#ending-text')?.textContent}`
-      );
-      alert('结局文字已复制到剪贴板');
-    }
-  } catch {
-    /* 用户取消分享 */
-  }
-}
-
-function disableChoices() {
-  $$('.btn-choice').forEach((b) => (b.disabled = true));
-}
-
-function clearChoices() {
-  const area = $('#choices-area');
-  if (area) area.innerHTML = '';
 }
 
 function showApiTestResult(status, message) {
@@ -222,6 +279,7 @@ function hideApiTestResult() {
   el.textContent = '';
 }
 
+/* ===== 弹窗 ===== */
 function openProcessModal() {
   renderProcessModal();
   const modal = $('#process-modal');
