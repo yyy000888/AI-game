@@ -7,6 +7,7 @@ let previousScreen = 'start';
 function init() {
   bindEvents();
   bindDialogueClick();
+  bindHintButton();
   loadSettingsForm(loadSettings());
 }
 
@@ -56,6 +57,30 @@ function hideHistoryModal() {
 
 function handleCloseSettings() {
   showScreen(previousScreen || 'start');
+}
+
+/**
+ * 显示章节过渡动画
+ */
+function showChapterTransition(chapter) {
+  return new Promise((resolve) => {
+    const el = document.getElementById('chapter-transition');
+    if (!el) return resolve();
+
+    const info = getChapterInfo(chapter);
+    const numberEl = el.querySelector('.chapter-transition-number');
+    const titleEl = el.querySelector('.chapter-transition-title');
+    const goalEl = el.querySelector('.chapter-transition-goal');
+    if (numberEl) numberEl.textContent = `第${chapter}章`;
+    if (titleEl) titleEl.textContent = info.title || '';
+    if (goalEl) goalEl.textContent = info.goal || '';
+
+    el.classList.remove('hidden');
+    setTimeout(() => {
+      el.classList.add('hidden');
+      resolve();
+    }, 2400);
+  });
 }
 
 async function handleTestApi() {
@@ -114,11 +139,18 @@ async function loadNextNode(playerChoice) {
 
   try {
     if (playerChoice) {
+      const prevChapter = gameState.currentChapter;
       const prevClueCount = gameState.clues.length;
       const prevSuspicion = gameState.suspicion;
       const currentNode = getLastStoryNode(gameState);
       applyChoice(gameState, playerChoice);
       updateStatusBar(gameState);
+
+      // 章节升级时播放全屏过渡动画
+      if (gameState.currentChapter > prevChapter) {
+        showLoading(false);
+        await showChapterTransition(gameState.currentChapter);
+      }
 
       const clueDelta = gameState.clues.length - prevClueCount;
       pendingSuspicionDelta = gameState.suspicion - prevSuspicion;
@@ -157,6 +189,7 @@ async function loadNextNode(playerChoice) {
     recordStoryNode(gameState, node);
     showLoading(false);
 
+    setCurrentSceneNodeIndex(gameState.currentNode);
     renderStoryNode(node, handleChoice, () => {
       isProcessing = false;
     });
