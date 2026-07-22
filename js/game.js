@@ -85,7 +85,8 @@ function applyChoice(state, choice) {
 
   state.currentNode += 1;
 
-  if (state.currentNode > 0 && state.currentNode % 3 === 0 && state.currentChapter < 5) {
+  // 每 4 个节点推进一章，让 16 个节点覆盖第 1~4 章
+  if (state.currentNode > 0 && state.currentNode % 4 === 0 && state.currentChapter < 5) {
     state.currentChapter += 1;
   }
 
@@ -103,8 +104,8 @@ function recordStoryNode(state, node) {
 
   if (state.storyHistory.length > 6) {
     const removed = state.storyHistory.splice(0, 3);
-    const summary = removed.map((n) => n.sceneDescription).join('；');
-    state.summaries.push(summary.slice(0, 100));
+    const summary = removed.map((n) => `${n.sceneDescription}：${n.narration?.slice(0, 60) || ''}`).join('；');
+    state.summaries.push(summary.slice(0, 200));
   }
 
   saveGameState(state);
@@ -125,11 +126,15 @@ function recordSelectedChoice(state, choiceText) {
 }
 
 function shouldTriggerEnding(state) {
-  return state.currentChapter >= 5 || state.currentNode >= 12;
+  return state.currentChapter >= 5 || state.currentNode >= DEMO_NODES.length;
 }
 
 function determineEndingType(state) {
-  const { suspicion, clues, choices } = state;
+  const { suspicion, clues, choices, npcRelations } = state;
+
+  // 好感度结局：任一 NPC 好感度达到 80 且嫌疑度不太高时触发
+  const hasHighRelation = npcRelations && Object.values(npcRelations).some((v) => v >= 80);
+  if (hasHighRelation && suspicion < 60) return 'friendship';
 
   const hasSpecialClue = SPECIAL_CLUES.some((c) => clues.includes(c));
   const hasSpecialPattern = SPECIAL_CHOICE_PATTERN.every((p) =>
