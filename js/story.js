@@ -2,22 +2,27 @@
 
 const storyFramework = {
   chapter1: {
+    title: '雾中初至',
     goal: '认识小镇，获得初步线索',
     scenes: ['小镇入口', '警局', '酒馆']
   },
   chapter2: {
+    title: '暗影浮现',
     goal: '收集线索，嫌疑人浮出水面',
     scenes: ['失踪者家', '森林边缘', '教堂']
   },
   chapter3: {
+    title: '危机四伏',
     goal: '嫌疑人反击，玩家陷入危险',
     scenes: ['地下密室', '悬崖边', '码头']
   },
   chapter4: {
+    title: '真相边缘',
     goal: '发现真相，做出关键抉择',
     scenes: ['灯塔', '老矿井', '小镇广场']
   },
   chapter5: {
+    title: '终章抉择',
     goal: '根据累积选择决定结局',
     scenes: ['迷雾散去的小镇']
   }
@@ -28,7 +33,8 @@ const ENDING_META = {
   bad: { title: '沉冤海底', label: '坏结局 — 迷雾吞噬了真相' },
   neutral: { title: '迷雾永驻', label: '中性结局 — 真相悬而未决' },
   hidden: { title: '深渊之眼', label: '隐藏结局 — 你窥见了不该知晓的秘密' },
-  special: { title: '共生迷雾', label: '特殊结局 — 你与小镇达成了某种默契' }
+  special: { title: '共生迷雾', label: '特殊结局 — 你与小镇达成了某种默契' },
+  friendship: { title: '同舟共济', label: '友情结局 — 有人在关键时刻拉了你一把' }
 };
 
 const SPECIAL_CLUES = ['古老符文', '迷雾核心', '共生契约'];
@@ -186,16 +192,66 @@ const DEMO_NODES = [
     isEnding: false
   },
 
-  // ===== 第3章开头：危机浮现 =====
+  // ===== 第3章：危机浮现 =====
   {
     sceneDescription: '小镇广场 — 紧张的气氛',
     narration: '第三天清晨，小镇广场聚集了几个面色不善的镇民。他们看到你就停下交谈，用警惕的目光注视着。酒馆老板娘匆匆跑来，小声告诉你："警长昨夜带人去了你的房间搜过了。你的东西被翻过了。"她塞给你一把钥匙，"去码头仓库，那里有陈远留下的东西。"',
     sceneImageKey: 'entrance',
     portrait: '酒馆老板娘',
     choices: [
-      { text: '立刻赶往码头仓库', suspicionDelta: 0, clue: null, npc: null, relationDelta: 0 },
+      { text: '立刻赶往码头仓库', suspicionDelta: 0, clue: null, npc: '酒馆老板娘', relationDelta: 5 },
       { text: '先去找警长当面对质', suspicionDelta: 10, clue: null, npc: '警长', relationDelta: -8 },
       { text: '假装不知情，暗中观察镇民', suspicionDelta: -5, clue: '镇民在监视你', npc: null, relationDelta: 0 }
+    ],
+    isEnding: false
+  },
+  {
+    sceneDescription: '码头仓库 — 陈远的秘密',
+    narration: '你趁雾色赶到废弃的码头仓库。钥匙插入锈锁时发出刺耳的摩擦声。仓库角落里有一只铁皮箱，箱内是一本航海日志和几张灯塔的草图。日志最后一页写着："封印在灯塔下，迷雾是锁，也是钥匙。有人在利用它。"你听见门外传来脚步声。',
+    sceneImageKey: 'lighthouse',
+    portrait: null,
+    choices: [
+      { text: '把日志和草图全部带走', suspicionDelta: 5, clue: '陈远的航海日志', npc: null, relationDelta: 0 },
+      { text: '只拍下关键页，原物放回原处', suspicionDelta: -5, clue: '灯塔草图', npc: null, relationDelta: 0 },
+      { text: '从后门溜走，避开来人', suspicionDelta: 0, clue: '码头有人跟踪', npc: null, relationDelta: 0 }
+    ],
+    isEnding: false
+  },
+  {
+    sceneDescription: '老矿井通道 — 向下的阶梯',
+    narration: '根据草图，你在灯塔后方找到一处被藤蔓遮掩的入口，通往老矿井。石壁上刻着与森林遗迹相同的符文，越往下走，空气越冷。在一扇石门前，你发现了镇上旧案的剪报——二十年前，也曾有一批人"消失"在迷雾中，而当时的警长正是如今这位的父亲。',
+    sceneImageKey: 'forest',
+    portrait: null,
+    choices: [
+      { text: '拓下石门上的符文', suspicionDelta: 0, clue: '古老符文', npc: null, relationDelta: 0 },
+      { text: '推开石门继续深入', suspicionDelta: 15, clue: '迷雾核心', npc: null, relationDelta: 0 },
+      { text: '把剪报收好，原路返回', suspicionDelta: -5, clue: '二十年前的旧案', npc: null, relationDelta: 0 }
+    ],
+    isEnding: false
+  },
+
+  // ===== 第4章：真相边缘 =====
+  {
+    sceneDescription: '灯塔下方 — 三方对峙',
+    narration: '你刚走出矿井，便被警长拦在灯塔下。他的手里握着枪，眼神却疲惫至极。"你不该查到这一步。"话音未落，神秘老人从雾中走出，手中石片微微发亮。酒馆的木门也开了，老板娘牵着小女孩站在门口。三个人，三份真相，都在等着你选。',
+    sceneImageKey: 'lighthouse',
+    portrait: '警长',
+    choices: [
+      { text: '让警长先说出他的秘密', suspicionDelta: -5, clue: '警长父亲的罪', npc: '警长', relationDelta: 10 },
+      { text: '询问老人真正的解决办法', suspicionDelta: 0, clue: '共生契约', npc: '神秘老人', relationDelta: 10 },
+      { text: '保护老板娘和孩子离开', suspicionDelta: -10, clue: '陈远女儿的证词', npc: '酒馆老板娘', relationDelta: 15 }
+    ],
+    isEnding: false
+  },
+  {
+    sceneDescription: '灯塔顶层 — 最终抉择',
+    narration: '你登上灯塔顶层。风暴在窗外咆哮，雾如活物般旋转。中央石台上放着三样东西：警长的手枪、老人的符文石片、以及陈远留下的灯塔钥匙。你必须决定如何处理封印——公开、加固、利用，还是逃离。',
+    sceneImageKey: 'lighthouse',
+    portrait: null,
+    choices: [
+      { text: '用钥匙打开封印，公开真相', suspicionDelta: -10, clue: '灯塔封印', npc: null, relationDelta: 0 },
+      { text: '接受石片，与迷雾共生', suspicionDelta: 5, clue: '共生契约', npc: '神秘老人', relationDelta: 10 },
+      { text: '夺过手枪，强行控制局面', suspicionDelta: 20, clue: null, npc: '警长', relationDelta: -15 }
     ],
     isEnding: false
   }
@@ -221,6 +277,10 @@ const DEMO_ENDINGS = {
   special: {
     sceneDescription: '共生迷雾 — 你成为了雾的一部分',
     narration: '你接受了神秘老人的提议。迷雾温柔地包裹了你，不再冰冷，反而像一层温暖的薄纱。你理解了陈远为何消失——他不是死亡，而是转化。你成为了迷雾与人间之间的桥梁，小镇在你的守护下维持着微妙的和平。偶尔有旅人路过，他们会看到一个在雾中微笑的侦探，然后安全地离开。'
+  },
+  friendship: {
+    sceneDescription: '同舟共济 — 迷雾中伸出的手',
+    narration: '就在你即将被迷雾吞没时，一个熟悉的声音叫住了你。你回头，看见那个一直被你真诚对待的人站在雾中，向你伸出手。因为你始终愿意倾听与相信，TA 在最关键的时刻选择站在你这边。你们一起走出迷雾，把陈远的真相带回了小镇。正义来得比想象中更温暖，因为这一次，你不是一个人在战斗。'
   }
 };
 
