@@ -115,6 +115,38 @@ body {
   background: rgba(255, 255, 255, 0.15);
 }
 
+/* 提示按钮：六边形，与其他按钮形状不同 */
+.btn-hint {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-sans);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--gold);
+  background: rgba(201, 162, 39, 0.12);
+  border: 1px solid rgba(201, 162, 39, 0.4);
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.btn-hint:hover:not(:disabled) {
+  background: rgba(201, 162, 39, 0.25);
+  color: #ffe082;
+  box-shadow: 0 0 12px rgba(201, 162, 39, 0.25);
+}
+
+.btn-hint:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  color: var(--fog-dim);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
 .btn-test {
   width: 100%;
   margin-bottom: 12px;
@@ -280,20 +312,106 @@ body {
   pointer-events: none;
 }
 
-/* 底部对话框 + 选项 */
+/* 章节过渡动画 */
+.chapter-transition {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  background:
+    radial-gradient(ellipse at center, rgba(74, 124, 155, 0.18) 0%, transparent 70%),
+    rgba(10, 14, 23, 0.96);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  animation: chapterFadeIn 0.4s ease forwards;
+}
+
+.chapter-transition.hidden {
+  display: none;
+}
+
+.chapter-transition-line {
+  width: 60px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent-glow), transparent);
+  opacity: 0;
+  animation: chapterLineExpand 2s ease forwards;
+}
+
+.chapter-transition-number {
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  color: var(--fog-dim);
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  opacity: 0;
+  animation: chapterTextIn 2s ease 0.2s forwards;
+}
+
+.chapter-transition-title {
+  font-family: var(--font-serif);
+  font-size: 2.4rem;
+  color: var(--fog-white);
+  letter-spacing: 0.25em;
+  text-shadow: 0 0 30px rgba(110, 181, 217, 0.35);
+  opacity: 0;
+  animation: chapterTextIn 2s ease 0.4s forwards;
+  margin-bottom: 0.25rem;
+}
+
+.chapter-transition-goal {
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  color: var(--fog-dim);
+  max-width: 70%;
+  text-align: center;
+  line-height: 1.5;
+  opacity: 0;
+  animation: chapterTextIn 2s ease 0.7s forwards;
+}
+
+@keyframes chapterFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes chapterLineExpand {
+  0% { width: 0; opacity: 0; }
+  20% { width: 80px; opacity: 1; }
+  80% { width: 80px; opacity: 1; }
+  100% { width: 120px; opacity: 0; }
+}
+
+@keyframes chapterTextIn {
+  0% { opacity: 0; transform: translateY(12px); }
+  25% { opacity: 1; transform: translateY(0); }
+  75% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-8px); }
+}
+
+/* 底部对话框 + 选项 — 固定高度，防止抖动 */
 .vn-bottom {
   position: relative;
   flex-shrink: 0;
   z-index: 10;
+  height: clamp(300px, 42vh, 420px);
+  display: flex;
+  flex-direction: column;
 }
 
 .vn-dialogue-box {
   background: linear-gradient(180deg, rgba(10, 14, 23, 0.85) 0%, rgba(10, 14, 23, 0.95) 100%);
   border-top: 1px solid rgba(110, 181, 217, 0.2);
   padding: 0.8rem 1.2rem 0.6rem;
-  min-height: 80px;
+  height: 130px;
+  flex: 0 0 auto;
   cursor: pointer;
   position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .vn-scene-label {
@@ -303,29 +421,22 @@ body {
   margin-bottom: 0.35rem;
   opacity: 0.8;
   letter-spacing: 0.05em;
+  flex-shrink: 0;
 }
 
 .vn-narration-box {
   position: relative;
-  min-height: 48px;
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
 }
 
 #narration-text {
   font-size: 0.95rem;
   line-height: 1.7;
   color: var(--fog-white);
-}
-
-.typewriter-cursor {
-  display: inline-block;
-  margin-left: 2px;
-  color: var(--accent-glow);
-  font-size: 0.8rem;
-  animation: blink 0.8s infinite;
-}
-
-.typewriter-cursor.hidden {
-  display: none;
+  width: 100%;
 }
 
 .vn-click-hint {
@@ -352,13 +463,17 @@ body {
 .vn-choices-area {
   display: flex;
   flex-direction: column;
+  justify-content: center;
   gap: 0.5rem;
   padding: 0.6rem 1rem calc(0.8rem + env(safe-area-inset-bottom, 0px));
   background: var(--bg-dark);
+  flex: 1 1 auto;
+  min-height: 170px;
 }
 
 .vn-choices-area:empty {
-  display: none;
+  display: flex;
+  background: linear-gradient(180deg, rgba(10, 14, 23, 0.85) 0%, rgba(10, 14, 23, 0.95) 100%);
 }
 
 .btn-choice {
@@ -373,6 +488,10 @@ body {
   cursor: pointer;
   transition: all 0.2s ease;
   font-family: var(--font-sans);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
 }
 
 .btn-choice:hover:not(:disabled) {
@@ -384,6 +503,60 @@ body {
 .btn-choice:disabled {
   opacity: 0.4;
   cursor: not-allowed;
+}
+
+.choice-text {
+  flex: 1 1 auto;
+}
+
+.choice-tags {
+  display: none;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  flex-shrink: 0;
+  justify-content: flex-end;
+}
+
+.vn-choices-area.hints-visible .choice-tags {
+  display: flex;
+}
+
+.choice-tag {
+  font-size: 0.65rem;
+  padding: 0.15rem 0.4rem;
+  border-radius: 3px;
+  white-space: nowrap;
+  font-family: var(--font-sans);
+}
+
+.choice-tag.risk {
+  background: rgba(139, 58, 58, 0.25);
+  color: #ef9a9a;
+  border: 1px solid rgba(139, 58, 58, 0.4);
+}
+
+.choice-tag.safe {
+  background: rgba(46, 125, 80, 0.2);
+  color: #81c784;
+  border: 1px solid rgba(46, 125, 80, 0.4);
+}
+
+.choice-tag.clue {
+  background: rgba(201, 162, 39, 0.2);
+  color: var(--gold);
+  border: 1px solid rgba(201, 162, 39, 0.4);
+}
+
+.choice-tag.relation-up {
+  background: rgba(110, 181, 217, 0.15);
+  color: var(--accent-glow);
+  border: 1px solid rgba(110, 181, 217, 0.35);
+}
+
+.choice-tag.relation-down {
+  background: rgba(139, 58, 58, 0.2);
+  color: #ef9a9a;
+  border: 1px solid rgba(139, 58, 58, 0.35);
 }
 
 /* 加载动画 */
@@ -768,14 +941,28 @@ body {
     font-size: 0.9rem;
   }
 
+  .vn-bottom {
+    height: clamp(260px, 40vh, 360px);
+  }
+
+  .vn-dialogue-box {
+    height: 110px;
+    padding: 0.6rem 1rem 0.5rem;
+  }
+
   .vn-choices-area {
     padding: 0.5rem 0.8rem calc(0.6rem + env(safe-area-inset-bottom, 0px));
     gap: 0.4rem;
+    min-height: 150px;
   }
 
   .btn-choice {
     padding: 0.6rem 0.8rem;
     font-size: 0.82rem;
+  }
+
+  .choice-tag {
+    font-size: 0.6rem;
   }
 
   .status-bar {
@@ -787,6 +974,12 @@ body {
   }
 
   .btn-icon {
+    width: 34px;
+    height: 34px;
+    font-size: 0.95rem;
+  }
+
+  .btn-hint {
     width: 34px;
     height: 34px;
     font-size: 0.95rem;
