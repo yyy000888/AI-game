@@ -10,6 +10,10 @@ let vnState = {
   choices: []
 };
 
+// 提示系统：每幕选项只能提示一次
+let currentSceneNodeIndex = null;
+const hintedNodes = new Set();
+
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => document.querySelectorAll(sel);
 
@@ -107,15 +111,19 @@ function renderStoryNode(node, onChoice, onTypewriterDone) {
   vnState.onComplete = onTypewriterDone;
 
   // 清空选项区
-  $('#choices-area').innerHTML = '';
+  const choicesArea = $('#choices-area');
+  if (choicesArea) {
+    choicesArea.innerHTML = '';
+    choicesArea.classList.remove('hints-visible');
+  }
 
   // 开始显示第一句
   showNextSentence();
+  updateHintButtonState();
 }
 
 function showNextSentence() {
   const el = $('#narration-text');
-  const cursor = $('#typewriter-cursor');
   const hint = $('#click-hint');
   if (!el) return;
 
@@ -127,18 +135,17 @@ function showNextSentence() {
 
   // 所有句子播完 → 显示选项
   if (vnState.currentSentenceIdx >= vnState.sentences.length) {
-    cursor?.classList.add('hidden');
     hint?.classList.add('hidden');
     renderChoices(vnState.choices, vnState.onChoice);
     vnState.onComplete?.();
     vnState.onComplete = null;
+    updateHintButtonState();
     return;
   }
 
   // 开始打下一句
   const sentence = vnState.sentences[vnState.currentSentenceIdx];
   hint?.classList.add('hidden');
-  cursor?.classList.remove('hidden');
 
   // 如果是第一句，清空；否则追加
   if (vnState.currentSentenceIdx === 0) {
@@ -209,26 +216,112 @@ function renderChoices(choices, onChoice) {
   const area = $('#choices-area');
   if (!area) return;
   area.innerHTML = '';
+  area.classList.remove('hints-visible');
 
   choices.forEach((choice, index) => {
+    const tags = buildChoiceTags(choice);
+    const tagsHtml = tags
+      .map((t) => `<span class="choice-tag ${t.class}">${escapeHtml(t.text)}</span>`)
+      .join('');
+
     const btn = document.createElement('button');
     btn.className = 'btn-choice';
-    btn.textContent = `${index + 1}. ${choice.text}`;
+    btn.innerHTML = `
+      <span class="choice-text">${index + 1}. ${escapeHtml(choice.text)}</span>
+      ${tagsHtml ? `<span class="choice-tags">${tagsHtml}</span>` : ''}
+    `;
     btn.addEventListener('click', () => {
       $$('.btn-choice').forEach((b) => (b.disabled = true));
+      disableHintButton();
       onChoice(choice);
     });
     area.appendChild(btn);
   });
+
+  updateHintButtonState();
+}
+
+/**
+ * 根据选项的收益/风险自动生成标签
+ */
+function buildChoiceTags(choice) {
+  const tags = [];
+
+  if (choice.suspicionDelta > 5) {
+    tags.push({ class: 'risk', text: '⚠ 高风险' });
+  } else if (choice.suspicionDelta < 0) {
+    tags.push({ class: 'safe', text: '✓ 降低嫌疑' });
+  }
+
+  if (choice.clue) {
+    tags.push({ class: 'clue', text: '🔍 可能获得线索' });
+  }
+
+  if (choice.npc && choice.relationDelta) {
+    if (choice.relationDelta >= 5) {
+      tags.push({ class: 'relation-up', text: `❤ ${choice.npc}` });
+    } else if (choice.relationDelta <= -5) {
+      tags.push({ class: 'relation-down', text: `⚠ ${choice.npc}` });
+    }
+  }
+
+  return tags;
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+function setCurrentSceneNodeIndex(index) {
+  currentSceneNodeIndex = index;
+}
+
+function updateHintButtonState() {
+  const btn = $('#btn-hint');
+  if (!btn) return;
+
+  const choicesArea = $('#choices-area');
+  const hasChoices = choicesArea && choicesArea.children.length > 0;
+  const alreadyHinted = currentSceneNodeIndex !== null && hintedNodes.has(currentSceneNodeIndex);
+  btn.disabled = !hasChoices || alreadyHinted;
+}
+
+function disableHintButton() {
+  const btn = $('#btn-hint');
+  if (btn) btn.disabled = true;
+}
+
+function handleHintClick() {
+  if (currentSceneNodeIndex === null) return;
+  if (hintedNodes.has(currentSceneNodeIndex)) return;
+
+  const choicesArea = $('#choices-area');
+  if (!choicesArea || choicesArea.children.length === 0) return;
+
+  hintedNodes.add(currentSceneNodeIndex);
+  choicesArea.classList.add('hints-visible');
+  updateHintButtonState();
+}
+
+function bindHintButton() {
+  const btn = $('#btn-hint');
+  if (btn) btn.addEventListener('click', handleHintClick);
 }
 
 function disableChoices() {
   $$('.btn-choice').forEach((b) => (b.disabled = true));
+  disableHintButton();
 }
 
 function clearChoices() {
   const area = $('#choices-area');
-  if (area) area.innerHTML = '';
+  if (area) {
+    area.innerHTML = '';
+    area.classList.remove('hints-visible');
+  }
+  updateHintButtonState();
 }
 
 /* ===== 结局 ===== */
